@@ -1,0 +1,32 @@
+name: Website Monitor Bot
+on:
+  schedule:
+    - cron: '*/10 * * * *' # Har 30 minute baad check karega (Aap time badal sakte hain)
+  workflow_dispatch: # Taakay aap manually bhi button daba kar check kar saken
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: install uv
+        uses: astral-sh/setup-uv@v5
+        
+    
+      - name: Install dependencies
+        run: uv add requests python-dotenv
+        
+      - name: Run Monitor
+        env:
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }} # GitHub Secrets se pass ayega
+          RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+        run: uv run monitor.py

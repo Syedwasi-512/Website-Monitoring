@@ -11,7 +11,7 @@ load_dotenv()
 # ─── Configuration ────────────────────────────────────────────────────────────
 WEBSITES = [
     "https://admin.sourcecode.academy/",
-    "https://sourcecode.academy/phpmyadmin",
+    "https://sourcecode.academy/github",
     # Aur websites add kar sakte ho yahan
 ]
 

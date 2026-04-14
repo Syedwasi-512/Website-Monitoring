@@ -1,0 +1,21 @@
+services:
+  - type: worker
+    name: website-monitor
+    runtime: python
+    buildCommand: pip install uv && uv sync
+    startCommand: uv run monitor.py
+    plan: free
+    envVars:
+      - key: SENDER_EMAIL
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: RECEIVER_EMAIL
+        sync: false
+      - key: DB_PATH
+        value: /data/monitor.db
+
+disk:
+  name: monitor-data
+  mountPath: /data
+  sizeGB: 1

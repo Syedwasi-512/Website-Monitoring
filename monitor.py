@@ -12,7 +12,7 @@ load_dotenv()
 # ─── Configuration ────────────────────────────────────────────────────────────
 WEBSITES = [
     "https://sourcecode.academy",
-    "https://sourcecode.academy/github"
+    "https://admin.sourcecode.academy/"
     # Aur websites yahan add karo
 ]
 

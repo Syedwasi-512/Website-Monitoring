@@ -1,12 +1,13 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+# Database
+monitor.db
 
-# Virtual environments
-.venv
+# Python
+__pycache__/
+*.py[cod]
+
+# Environments
+.venv/
 .env
 
+# Tool specific
+.python-version

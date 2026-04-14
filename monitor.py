@@ -1,6 +1,6 @@
 import requests
-import smtplib
 import sqlite3
+import resend
 import os
 import time
 from datetime import datetime, timezone
@@ -19,6 +19,7 @@ WEBSITES = [
 EMAIL_ADDRESS      = os.environ.get('SENDER_EMAIL')
 EMAIL_PASSWORD     = os.environ.get('EMAIL_PASS')
 RECEIVER_EMAIL     = os.environ.get('RECEIVER_EMAIL')
+resend.api_key = os.environ.get('RESEND_API_KEY')
 
 TIMEOUT_SECONDS    = 15
 FAILURE_THRESHOLD  = 3
@@ -107,25 +108,29 @@ def update_site_state(url: str, status: str, failure_count: int, alert_sent: int
 
 
 # ─── Email ────────────────────────────────────────────────────────────────────
+
+# Configuration mein RESEND_API_KEY add karein
+
+
 def send_email(subject: str, body: str) -> None:
-    if not all([EMAIL_ADDRESS, EMAIL_PASSWORD, RECEIVER_EMAIL]):
-        print("❌ Email credentials missing!")
+    # Check karein ke API key aur emails maujood hain
+    if not resend.api_key or not all([EMAIL_ADDRESS, RECEIVER_EMAIL]):
+        print("❌ Resend API Key or Email settings missing!")
         return
 
-    msg = EmailMessage()
-    msg.set_content(body)
-    msg["Subject"] = subject
-    msg["From"]    = EMAIL_ADDRESS
-    msg["To"]      = RECEIVER_EMAIL
-
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 587) as smtp:
-            smtp.starttls()
-            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-            smtp.send_message(msg)
-        print(f"📧 Email sent → {RECEIVER_EMAIL}")
+        params = {
+            "from": f"Monitor <{EMAIL_ADDRESS}>", # Resend mein email format 'Name <email>' hota hai
+            "to": [RECEIVER_EMAIL],
+            "subject": subject,
+            "text": body,
+        }
+
+        r = resend.Emails.send(params)
+        print(f"📧 Email sent via Resend API! ID: {r['id']}")
+        
     except Exception as e:
-        print(f"❌ Failed to send email: {e}")
+        print(f"❌ Resend API Error: {e}")
 
 
 def build_down_email(result: dict, failure_count: int) -> tuple[str, str]:

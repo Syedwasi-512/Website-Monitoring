@@ -1,7 +1,7 @@
 name: Website Monitor Bot
 on:
   schedule:
-    - cron: '*/10 * * * *' # Har 30 minute baad check karega (Aap time badal sakte hain)
+    - cron: '*/10 * * * *' #
   workflow_dispatch: # Taakay aap manually bhi button daba kar check kar saken
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
     
       - name: Install dependencies
         run: uv add requests python-dotenv
-        
+
       - name: Run Monitor
         env:
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }} # GitHub Secrets se pass ayega

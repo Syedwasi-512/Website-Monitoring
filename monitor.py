@@ -120,6 +120,7 @@ def send_email(subject: str, body: str) -> None:
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 587) as smtp:
+            smtp.starttls()
             smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
             smtp.send_message(msg)
         print(f"📧 Email sent → {RECEIVER_EMAIL}")

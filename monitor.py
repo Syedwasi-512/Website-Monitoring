@@ -3,7 +3,6 @@ import smtplib
 import sqlite3
 import os
 import time
-import schedule
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from dotenv import load_dotenv
@@ -13,7 +12,6 @@ load_dotenv()
 # ─── Configuration ────────────────────────────────────────────────────────────
 WEBSITES = [
     "https://sourcecode.academy",
-    "https://sourcecode.academy/github"
     # Aur websites yahan add karo
 ]
 
@@ -25,6 +23,7 @@ TIMEOUT_SECONDS    = 15
 FAILURE_THRESHOLD  = 3
 DB_PATH            = os.environ.get('DB_PATH', 'monitor.db')
 CHECK_INTERVAL_MIN = 10
+RETRY_INTERVAL_MIN = 2   # Failure pe jaldi dobara check
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -222,7 +221,8 @@ def check_website(url: str) -> dict:
     return result
 
 
-def process_result(result: dict) -> None:
+def process_result(result: dict) -> bool:
+    """Returns True if a retry check is needed soon."""
     url    = result["url"]
     status = result["status"]
     state  = get_site_state(url)
@@ -233,6 +233,7 @@ def process_result(result: dict) -> None:
             send_email(subject, body)
             print(f"💚 Recovery alert sent for {url}")
         update_site_state(url, "UP", failure_count=0, alert_sent=0)
+        return False  # Sab theek hai, normal schedule
 
     else:
         new_failure_count = state["failure_count"] + 1
@@ -242,28 +243,36 @@ def process_result(result: dict) -> None:
             subject, body = build_down_email(result, new_failure_count)
             send_email(subject, body)
             update_site_state(url, status, failure_count=new_failure_count, alert_sent=1)
+            return False  # Alert gaya, normal schedule
 
         elif state["alert_sent"] == 1:
             print(f"🔕 Alert already sent for {url}, skipping duplicate.")
             update_site_state(url, status, failure_count=new_failure_count, alert_sent=1)
+            return False
 
         else:
+            # Pehli ya doosri failure — jaldi retry karo!
             update_site_state(url, status, failure_count=new_failure_count, alert_sent=0)
+            return True  # Retry needed
 # ──────────────────────────────────────────────────────────────────────────────
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
-def run_checks() -> None:
+def run_checks() -> bool:
+    """Returns True if any site needs a quick retry."""
     print(f"\n{'='*55}")
     print(f"  Website Monitor — {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
     print(f"{'='*55}")
 
+    needs_retry = False
     for url in WEBSITES:
         result = check_website(url)
         save_check(result)
-        process_result(result)
+        if process_result(result):
+            needs_retry = True
 
     print(f"{'='*55}\n")
+    return needs_retry
 
 
 if __name__ == "__main__":
@@ -272,11 +281,13 @@ if __name__ == "__main__":
     print(f"⏰ Checking every {CHECK_INTERVAL_MIN} minutes — exact time pe!")
 
     # Pehla check turant karo
-    run_checks()
+    needs_retry = run_checks()
 
-    # Phir har 10 min pe automatically
-    schedule.every(CHECK_INTERVAL_MIN).minutes.do(run_checks)
-
+    # Smart loop — failure pe 2 min mein retry, warna 10 min wait
     while True:
-        schedule.run_pending()
-        time.sleep(30)
+        if needs_retry:
+            print(f"⚡ Failure detected — retrying in {RETRY_INTERVAL_MIN} min instead of {CHECK_INTERVAL_MIN} min!")
+            time.sleep(RETRY_INTERVAL_MIN * 60)
+        else:
+            time.sleep(CHECK_INTERVAL_MIN * 60)
+        needs_retry = run_checks()

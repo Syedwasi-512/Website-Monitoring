@@ -16,9 +16,14 @@ WEBSITES = [
     # Aur websites yahan add karo
 ]
 
+RECEIVER_EMAIL = [
+    email.strip()
+    for email in os.environ.get('RECEIVER_EMAIL', '').split(',')
+    if email.strip()
+]
+
 EMAIL_ADDRESS      = os.environ.get('SENDER_EMAIL')
 EMAIL_PASSWORD     = os.environ.get('EMAIL_PASS')
-RECEIVER_EMAIL     = os.environ.get('RECEIVER_EMAIL')
 resend.api_key = os.environ.get('RESEND_API_KEY')
 
 TIMEOUT_SECONDS    = 15
@@ -114,14 +119,14 @@ def update_site_state(url: str, status: str, failure_count: int, alert_sent: int
 
 def send_email(subject: str, body: str) -> None:
     # Check karein ke API key aur emails maujood hain
-    if not resend.api_key or not all([EMAIL_ADDRESS, RECEIVER_EMAIL]):
+    if not resend.api_key or not EMAIL_ADDRESS or not RECEIVER_EMAIL:
         print("❌ Resend API Key or Email settings missing!")
         return
 
     try:
         params = {
             "from": f"Monitor <{EMAIL_ADDRESS}>", # Resend mein email format 'Name <email>' hota hai
-            "to": [RECEIVER_EMAIL],
+            "to": RECEIVER_EMAIL,
             "subject": subject,
             "text": body,
         }

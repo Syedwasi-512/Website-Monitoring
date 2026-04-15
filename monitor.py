@@ -11,9 +11,9 @@ load_dotenv()
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 WEBSITES = [
-    "https://sourcecode.academy",
-    "https://admin.sourcecode.academy/"
-    # Aur websites yahan add karo
+    url.strip()
+    for url in os.environ.get('URL', 'https://sourcecode.academy').split(',')
+    if url.strip()
 ]
 
 RECEIVER_EMAIL = [
